@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#171338">
+  <meta name="description" content="The personal website of Jemuel Miesa — projects, music, D-Player, livestream updates, and gameplay videos.">
+  <title>Jemuel Miesa</title>
+  <link rel="icon" href="icon.jpg" type="image/jpeg">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #100e24;
+      --panel: #191638;
+      --panel-2: #211d49;
+      --indigo: #29245e;
+      --indigo-light: #7770d6;
+      --orange: #ff9b42;
+      --orange-soft: #ffc078;
+      --text: #f7f4ff;
+      --muted: #bbb6d4;
+      --line: rgba(255,255,255,.11);
+      --sidebar-width: 272px;
+      --topbar-height: 82px;
+      --radius: 22px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+    body { overflow: hidden; }
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+    .site-shell { min-height: 100svh; background:
+      radial-gradient(ellipse at 78% 13%, rgba(255,155,66,.12), transparent 31%),
+      radial-gradient(ellipse at 35% 92%, rgba(91,79,194,.20), transparent 42%), var(--bg); }
+
+    /* Fixed title bar */
+    .topbar {
+      height: var(--topbar-height); position: fixed; z-index: 30; inset: 0 0 auto 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(17,15,39,.88); border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      padding: 0 76px;
+    }
+    .topbar::after { content: ""; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 150px; height: 2px; background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+    .site-title { margin: 0; text-align: center; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.28rem, 3.1vw, 2rem); font-weight: 700; letter-spacing: .19em; line-height: 1.1; text-transform: uppercase; color: #fff; text-shadow: 0 3px 22px rgba(255,255,255,.12); }
+    .topbar-tools { position: absolute; right: 22px; display: flex; align-items: center; gap: 10px; }
+    .icon-button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 13px; color: var(--orange-soft); background: rgba(255,255,255,.045); cursor: pointer; transition: .2s ease; }
+    .icon-button:hover, .icon-button:focus-visible { background: rgba(255,155,66,.15); border-color: rgba(255,155,66,.55); outline: none; transform: translateY(-1px); }
+    .menu-toggle { display: none; position: absolute; left: 17px; }
+
+    /* Sidebar navigation */
+    .sidebar {
+      position: fixed; z-index: 25; top: var(--topbar-height); bottom: 0; left: 0; width: var(--sidebar-width);
+      padding: 25px 17px 22px; display: flex; flex-direction: column; gap: 17px;
+      background: linear-gradient(180deg, rgba(31,27,75,.98), rgba(19,17,48,.98));
+      border-right: 1px solid var(--line); overflow-y: auto;
+    }
+    .profile-mini { padding: 9px 11px 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
+    .profile-mini img { width: 48px; height: 48px; border: 2px solid rgba(255,155,66,.8); border-radius: 15px; object-fit: cover; background: #342d76; }
+    .profile-mini strong { display: block; font-family: Georgia, serif; letter-spacing: .04em; font-size: 1rem; }
+    .profile-mini span { display: block; color: var(--muted); font-size: .76rem; margin-top: 4px; }
+    .nav-label { color: #938bbd; padding: 3px 12px 0; font-size: .68rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
+    .nav-list { display: flex; flex-direction: column; gap: 6px; }
+    .nav-button, .submenu-button {
+      width: 100%; min-height: 45px; border: 1px solid transparent; border-radius: 13px;
+      background: transparent; color: #d9d5ec; cursor: pointer; display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; text-align: left; transition: background .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .nav-button:hover, .submenu-button:hover { background: rgba(255,255,255,.06); color: #fff; }
+    .nav-button.active { color: #fff; background: linear-gradient(100deg, rgba(255,155,66,.19), rgba(255,155,66,.055)); border-color: rgba(255,155,66,.28); box-shadow: inset 3px 0 var(--orange); }
+    .nav-icon { width: 22px; flex: 0 0 22px; text-align: center; color: var(--orange-soft); font-size: 1.05rem; }
+    .nav-button .chevron { margin-left: auto; color: #a6a0c6; transition: transform .2s ease; }
+    .nav-button[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+    .submenu { display: none; padding: 5px 0 4px 35px; }
+    .submenu.open { display: grid; gap: 4px; }
+    .submenu-button { min-height: 39px; padding: 8px 10px; font-size: .86rem; color: #c3bedb; }
+    .submenu-button.active { color: var(--orange-soft); background: rgba(255,155,66,.09); }
+    .sidebar-bottom { margin-top: auto; padding: 14px 12px 2px; border-top: 1px solid var(--line); color: #9993b8; font-size: .76rem; line-height: 1.6; }
+    .sidebar-bottom b { color: var(--orange-soft); font-weight: 650; }
+
+    /* Page viewport */
+    .main-area { position: fixed; top: var(--topbar-height); right: 0; bottom: 0; left: var(--sidebar-width); overflow: hidden; }
+    .page { display: none; position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: clamp(24px, 5vw, 58px); animation: pageIn .28s ease both; }
+    .page.active { display: block; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .page-inner { width: min(100%, 1120px); margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 9px; color: var(--orange-soft); font-size: .72rem; text-transform: uppercase; letter-spacing: .2em; font-weight: 800; }
+    .eyebrow::before { content: ""; width: 25px; height: 1px; background: var(--orange); }
+    .page-heading { margin: 12px 0 13px; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: clamp(2.15rem, 5vw, 4.2rem); letter-spacing: -.035em; line-height: 1.05; }
+    .page-heading .accent { color: var(--orange); }
+    .lead { max-width: 720px; margin: 0; color: var(--muted); font-size: clamp(.98rem, 1.5vw, 1.12rem); line-height: 1.8; }
+    .heading-row { display: flex; align-items: center; gap: 15px; }
+    .heading-icon { width: 58px; height: 58px; flex: 0 0 58px; display: grid; place-items: center; border-radius: 18px; font-size: 1.55rem; color: var(--orange-soft); background: linear-gradient(140deg, rgba(255,155,66,.20), rgba(119,112,214,.18)); border: 1px solid rgba(255,255,255,.12); }
+    .section-title { margin: 0 0 13px; font: 700 clamp(1.3rem, 2.6vw, 1.8rem) Georgia, "Times New Roman", serif; }
+    .section-title .small-icon { color: var(--orange); margin-right: 9px; }
+    .divider { height: 1px; background: linear-gradient(90deg, rgba(255,155,66,.55), var(--line), transparent); margin: 28px 0; }
+    .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 17px; margin-top: 30px; }
+    .card { position: relative; overflow: hidden; padding: 23px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(40,35,91,.82), rgba(25,22,57,.84)); box-shadow: 0 15px 45px rgba(0,0,0,.13); }
+    .card::after { content: ""; position: absolute; width: 130px; height: 130px; border-radius: 50%; right: -58px; top: -68px; background: rgba(255,155,66,.07); filter: blur(2px); pointer-events: none; }
+    .card-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; color: var(--orange-soft); background: rgba(255,155,66,.12); border: 1px solid rgba(255,155,66,.18); font-size: 1.1rem; margin-bottom: 16px; }
+    .card h3 { margin: 0 0 8px; font: 700 1.23rem Georgia, serif; }
+    .card p { margin: 0; color: var(--muted); font-size: .93rem; line-height: 1.75; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; margin-top: 17px; padding: 8px 12px; color: var(--orange-soft); border: 1px solid rgba(255,155,66,.28); background: rgba(255,155,66,.07); border-radius: 999px; font-size: .78rem; font-weight: 700; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 25px; }
+    .action-button { display: inline-flex; justify-content: center; align-items: center; gap: 9px; min-height: 47px; padding: 0 17px; border-radius: 13px; border: 1px solid rgba(255,155,66,.42); background: linear-gradient(110deg, #f18b35, #ffad5c); color: #21152f; text-decoration: none; font-weight: 800; font-size: .9rem; cursor: pointer; box-shadow: 0 9px 24px rgba(255,132,42,.15); transition: transform .18s ease, filter .18s ease; }
+    .action-button:hover { transform: translateY(-2px); filter: brightness(1.07); }
+    .action-button.secondary { background: rgba(255,255,255,.045); color: var(--text); border-color: var(--line); box-shadow: none; }
+    .action-button.secondary:hover { border-color: rgba(255,155,66,.45); }
+    .info-list { display: grid; gap: 12px; margin-top: 24px; }
+    .info-item { padding: 17px 19px; display: flex; align-items: flex-start; gap: 13px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.035); }
+    .info-item .bullet { color: var(--orange); font-size: 1.15rem; line-height: 1.35; }
+    .info-item strong { display: block; margin-bottom: 4px; }
+    .info-item span { color: var(--muted); font-size: .9rem; line-height: 1.65; }
+    .social-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 15px; margin-top: 29px; }
+    .social-card { min-height: 150px; text-decoration: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; border-radius: 19px; border: 1px solid var(--line); background: linear-gradient(145deg, rgba(43,38,96,.8), rgba(24,21,55,.88)); transition: .2s ease; }
+    .social-card:hover { border-color: rgba(255,155,66,.48); transform: translateY(-3px); }
+    .social-card .social-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 13px; background: rgba(255,155,66,.13); color: var(--orange-soft); font-size: 1.1rem; font-weight: 900; }
+    .social-card strong { font-family: Georgia, serif; font-size: 1.15rem; }
+    .social-card span { color: var(--muted); font-size: .78rem; overflow-wrap: anywhere; }
+    .contact-card { max-width: 720px; margin-top: 30px; padding: clamp(22px,4vw,34px); border-radius: var(--radius); border: 1px solid rgba(255,155,66,.23); background: linear-gradient(140deg, rgba(44,38,99,.8), rgba(26,23,59,.9)); }
+    .email-address { display: inline-block; margin: 8px 0 0; color: var(--orange-soft); font-size: clamp(1rem,2vw,1.25rem); font-weight: 750; overflow-wrap: anywhere; text-decoration: none; }
+    .music-track { display: grid; grid-template-columns: 46px minmax(0,1fr) auto; align-items: center; gap: 13px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .track-number { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: var(--orange-soft); background: rgba(255,155,66,.1); font-weight: 800; }
+    .music-track strong { display: block; }
+    .music-track small { color: var(--muted); }
+    .track-type { color: #c4bee1; font-size: .75rem; }
+    .status-line { display: inline-flex; align-items: center; gap: 9px; color: var(--orange-soft); font-weight: 750; font-size: .85rem; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 5px rgba(255,155,66,.12); }
+    .page-footer { margin-top: auto; padding-top: 38px; color: #827da2; font-size: .76rem; }
+    .gameplay-banner { margin-top: 28px; min-height: 220px; padding: clamp(24px,4vw,38px); display: flex; align-items: flex-end; border: 1px solid rgba(255,155,66,.2); border-radius: 24px; background: radial-gradient(circle at 80% 18%, rgba(255,155,66,.22), transparent 30%), linear-gradient(130deg, rgba(56,49,121,.92), rgba(24,20,57,.95)); }
+
+    .mobile-overlay { display: none; position: fixed; inset: var(--topbar-height) 0 0; z-index: 20; background: rgba(5,4,16,.65); }
+    @media (max-width: 850px) {
+      :root { --sidebar-width: 260px; --topbar-height: 72px; }
+      .menu-toggle { display: grid; }
+      .topbar { padding: 0 65px; }
+      .topbar-tools { right: 13px; }
+      .sidebar { transform: translateX(-102%); transition: transform .25s ease; box-shadow: 20px 0 60px rgba(0,0,0,.3); }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-overlay.show { display: block; }
+      .main-area { left: 0; }
+      .social-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      :root { --topbar-height: 66px; }
+      .site-title { font-size: 1.08rem; letter-spacing: .12em; }
+      .topbar { padding: 0 57px; }
+      .topbar-tools { right: 9px; }
+      .icon-button { width: 38px; height: 38px; border-radius: 11px; }
+      .menu-toggle { left: 9px; }
+      .page { padding: 27px 18px 30px; }
+      .card-grid { grid-template-columns: 1fr; }
+      .heading-icon { width: 49px; height: 49px; flex-basis: 49px; border-radius: 15px; }
+      .music-track { grid-template-columns: 40px minmax(0,1fr); }
+      .track-type { grid-column: 2; }
+      .contact-card { padding: 22px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <button class="icon-button menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+      <h1 class="site-title">Jemuel Miesa</h1>
+      <div class="topbar-tools">
+        <button class="icon-button" id="musicToggle" aria-label="Play background music" title="Play background music">♫</button>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="profile-mini">
+        <img src="icon.jpg" alt="Jemuel Miesa icon" onerror="this.onerror=null;this.src='icon.png';this.onerror=function(){this.style.visibility='hidden';};">
+        <div><strong>Jemuel Miesa</strong><span>Personal Website</span></div>
+      </div>
+      <div class="nav-label">Navigation</div>
+      <nav class="nav-list">
+        <button class="nav-button active" data-page="home"><span class="nav-icon">⌂</span>Home</button>
+        <button class="nav-button" data-page="contact"><span class="nav-icon">✉</span>Contact Me</button>
+        <button class="nav-button" data-page="about"><span class="nav-icon">✦</span>About Jemuel Miesa</button>
+        <button class="nav-button" data-page="dplayer"><span class="nav-icon">◈</span>About D-Player</button>
+        <button class="nav-button" data-page="social"><span class="nav-icon">◎</span>My Social Media's</button>
+        <button class="nav-button" data-page="livestreams"><span class="nav-icon">◷</span>Scheduled Livestreams</button>
+        <button class="nav-button" id="gameplayToggle" aria-expanded="false" aria-controls="gameplaySubmenu"><span class="nav-icon">▷</span>Gameplays <span class="chevron">⌄</span></button>
+        <div class="submenu" id="gameplaySubmenu">
+          <button class="submenu-button" data-page="zombiecatchers">· Zombie Catchers Gameplay</button>
+          <button class="submenu-button" data-page="mobilelegends">· Mobile Legends: Gameplay</button>
+          <button class="submenu-button" data-page="zombiets">· Zombie Tsunami Gameplay</button>
+        </div>
+      </nav>
+      <div class="sidebar-bottom"><b>INDIGO × ORANGE</b><br>Projects, music, and gameplay updates.<br>© <span id="year"></span> Jemuel Miesa</div>
+    </aside>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <main class="main-area" id="mainArea">
+      <!-- HOME -->
+      <section class="page active" id="page-home" aria-labelledby="homeTitle">
+        <div class="page-inner">
+          <span class="eyebrow">Welcome to my website</span>
+          <h2 class="page-heading" id="homeTitle">Hello, I'm <span class="accent">Jemuel.</span></h2>
+          <p class="lead">Welcome to my personal corner of the internet. Explore my creative projects, music, D-Player archives, livestream announcements, and gameplay videos—all gathered in one place.</p>
+          <div class="action-row">
+            <button class="action-button" data-go="about">Discover More <span>↗</span></button>
+            <button class="action-button secondary" data-go="social">Find My Socials</button>
+          </div>
+          <div class="card-grid">
+            <article class="card">
+              <div class="card-icon">♫</div>
+              <h3>Newly Released Music</h3>
+              <p>Discover my music, including my single <em>When Answers Aren't Enough</em>, its B-side track, and two instrumental tracks.</p>
+              <span class="pill">♪ Music Updates</span>
+            </article>
+            <article class="card">
+              <div class="card-icon">☣</div>
+              <h3>Daily Zombie Catchers Gameplay</h3>
+              <p>Follow my Zombie Catchers gameplay uploads, along with videos featuring Mobile Legends and Zombie Tsunami.</p>
+              <span class="pill">▶ YouTube Gameplays</span>
+            </article>
+          </div>
+          <div class="divider"></div>
+          <h3 class="section-title"><span class="small-icon">✧</span>What you'll find here</h3>
+          <p class="lead">Learn about my work on Pokémon Crystal Neptune, explore the history of D-Player, check my social media pages, and keep an eye out for future livestream announcements.</p>
+          <div class="page-footer">Made with creativity by Jemuel Miesa.</div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="page" id="page-contact" aria-labelledby="contactTitle">
+        <div class="page-inner">
+          <span class="eyebrow">Get in touch</span>
+          <div class="heading-row"><div class="heading-icon">✉</div><h2 class="page-heading" id="contactTitle">Contact <span class="accent">Me</span></h2></div>
+          <p class="lead">For questions, project-related discussions, or other inquiries, you can reach me through my email address below.</p>
+          <div class="contact-card">
+            <span class="eyebrow">Email contact</span>
+            <h3 class="section-title" style="margin-top:14px;margin-bottom:5px">Jemuel Pimentel Miesa</h3>
+            <a class="email-address" href="mailto:advancedmlbbserver@gmail.com">advancedmlbbserver@gmail.com</a>
+            <div class="action-row">
+              <a class="action-button" href="mailto:advancedmlbbserver@gmail.com">Send an Email ↗</a>
+              <button class="action-button secondary" id="copyEmail">Copy Email</button>
+            </div>
+            <p id="copyStatus" aria-live="polite" style="min-height:1em;margin:12px 0 0;color:var(--orange-soft);font-size:.82rem"></p>
+          </div>
+          <div class="page-footer">Please allow some time for a response.</div>
+        </div>
+      </section>
+
+      <!-- ABOUT JEMUEL -->
+      <section class="page" id="page-about" aria-labelledby="aboutTitle">
+        <div class="page-inner">
+          <span class="eyebrow">The person behind the projects</span>
+          <div class="heading-row"><div class="heading-icon">✦</div><h2 class="page-heading" id="aboutTitle">About <span class="accent">Jemuel Miesa</span></h2></div>
+          <p class="lead">Jemuel Miesa is a multi-talented creator with interests spanning game development, web design, ROM hacking, and music. He enjoys bringing ideas to life through technology and creative expression.</p>
+          <div class="info-list">
+            <div class="info-item"><span class="bullet">◆</span><div><strong>Game Development & ROM Hacking</strong><span>Jemuel leads the Pokémon Crystal Neptune project, a Game Boy Advance ROM-hacking project. He also creates HTML5 games and experiments with interactive web experiences.</span></div></div>
+            <div class="info-item"><span class="bullet">◆</span><div><strong>Web Design & Development</strong><span>Alongside game-related projects, he builds HTML5 webpages and browser-based experiences, combining interface design with practical functionality.</span></div></div>
+            <div class="info-item"><span class="bullet">◆</span><div><strong>Music & Singing</strong><span>Jemuel also enjoys singing and recording music. His own single, <em>When Answers Aren't Enough</em>, is accompanied by the B-side track <em>All Along</em> and two instrumental tracks.</span></div></div>
+          </div>
+          <div class="divider"></div>
+          <h3 class="section-title"><span class="small-icon">♫</span>Music Release</h3>
+          <div class="card">
+            <h3>When Answers Aren't Enough</h3>
+            <p>An original release by Jemuel Miesa. The release includes the B-side track and two instrumental recordings.</p>
+            <div class="music-track"><span class="track-number">01</span><div><strong>When Answers Aren't Enough</strong><small>Main single</small></div><span class="track-type">Main Track</span></div>
+            <div class="music-track"><span class="track-number">02</span><div><strong>All Along</strong><small>B-side track</small></div><span class="track-type">B-side</span></div>
+            <div class="music-track"><span class="track-number">03</span><div><strong>Instrumental Track 1</strong><small>Instrumental recording</small></div><span class="track-type">Instrumental</span></div>
+            <div class="music-track" style="border-bottom:0"><span class="track-number">04</span><div><strong>Instrumental Track 2</strong><small>Instrumental recording</small></div><span class="track-type">Instrumental</span></div>
+          </div>
+          <div class="page-footer">Creativity takes many forms.</div>
+        </div>
+      </section>
+
+      <!-- ABOUT D-PLAYER -->
+      <section class="page" id="page-dplayer" aria-labelledby="dplayerTitle">
+        <div class="page-inner">
+          <span class="eyebrow">A project from the past</span>
+          <div class="heading-row"><div class="heading-icon">◈</div><h2 class="page-heading" id="dplayerTitle">About <span class="accent">D-Player</span></h2></div>
+          <p class="lead">D-Player was a project associated with Spaceillusion Inc. that was discontinued following the shutdown in 2012. Although the project is no longer active, some of its related files and programs have been preserved.</p>
+          <div class="card-grid">
+            <article class="card"><div class="card-icon">▣</div><h3>Project Background</h3><p>D-Player is part of a legacy digital project connected with Spaceillusion Inc. Its services or development came to an end in 2012.</p></article>
+            <article class="card"><div class="card-icon">⌘</div><h3>Preserved Materials</h3><p>Some files and programs are still in the possession of Jemuel Miesa, Richmond Francisco, and another user known as <strong>f8rinoa</strong>, whose identity is unknown.</p></article>
+          </div>
+          <div class="divider"></div>
+          <h3 class="section-title"><span class="small-icon">✧</span>Keeping a digital archive</h3>
+          <p class="lead">The remaining materials offer a way to revisit and study parts of the project's history. This page serves as an informational overview; it does not imply that D-Player is currently maintained or officially operating.</p>
+          <div class="page-footer">D-Player information provided by Jemuel Miesa.</div>
+        </div>
+      </section>
+
+      <!-- SOCIAL -->
+      <section class="page" id="page-social" aria-labelledby="socialTitle">
+        <div class="page-inner">
+          <span class="eyebrow">Let's connect</span>
+          <div class="heading-row"><div class="heading-icon">◎</div><h2 class="page-heading" id="socialTitle">My Social <span class="accent">Media's</span></h2></div>
+          <p class="lead">Follow my pages for videos, updates, and more of my creative activities.</p>
+          <div class="social-grid">
+            <a class="social-card" href="https://youtube.com/@masterred.mlbb" target="_blank" rel="noopener noreferrer"><span class="social-mark">▶</span><strong>YouTube</strong><span>@masterred.mlbb ↗</span></a>
+            <a class="social-card" href="https://facebook.com/@jemuelmiesa.80" target="_blank" rel="noopener noreferrer"><span class="social-mark">f</span><strong>Facebook</strong><span>@jemuelmiesa.80 ↗</span></a>
+            <a class="social-card" href="https://instagram.com/@itzurboy_jemxz" target="_blank" rel="noopener noreferrer"><span class="social-mark">◎</span><strong>Instagram</strong><span>@itzurboy_jemxz ↗</span></a>
+          </div>
+          <div class="page-footer">Find and follow Jemuel Miesa across social platforms.</div>
+        </div>
+      </section>
+
+      <!-- LIVESTREAMS -->
+      <section class="page" id="page-livestreams" aria-labelledby="livestreamTitle">
+        <div class="page-inner">
+          <span class="eyebrow">Live broadcast updates</span>
+          <div class="heading-row"><div class="heading-icon">◷</div><h2 class="page-heading" id="livestreamTitle">Scheduled <span class="accent">Livestreams</span></h2></div>
+          <p class="lead">Upcoming livestreams are coming soon. Details will be posted here once the schedule has been confirmed.</p>
+          <div class="contact-card">
+            <div class="status-line"><span class="status-dot"></span> Schedule to be announced</div>
+            <h3 class="section-title" style="margin-top:19px">Next planned livestream</h3>
+            <p class="lead" style="font-size:1rem">The next livestream is planned to cover the continuation of <strong style="color:#fff">Pokémon Crystal Neptune</strong>. The date and time have not yet been specified and will be announced in a future update.</p>
+            <span class="pill">Date: To be announced</span>
+            <div class="action-row"><a class="action-button" href="https://youtube.com/@masterred.mlbb" target="_blank" rel="noopener noreferrer">Visit YouTube Channel ↗</a></div>
+          </div>
+          <div class="page-footer">Please check back for schedule announcements.</div>
+        </div>
+      </section>
+
+      <!-- ZOMBIE CATCHERS -->
+      <section class="page" id="page-zombiecatchers" aria-labelledby="zcTitle">
+        <div class="page-inner">
+          <span class="eyebrow">Gameplay videos</span>
+          <div class="heading-row"><div class="heading-icon">☣</div><h2 class="page-heading" id="zcTitle">Zombie Catchers <span class="accent">Gameplay</span></h2></div>
+          <p class="lead">Watch Jemuel Miesa's Zombie Catchers gameplay uploads, featuring gameplay sessions and progress from the zombie-catching adventure.</p>
+          <div class="gameplay-banner"><div><span class="eyebrow">From Jemuel's YouTube channel</span><h3 class="section-title" style="font-size:clamp(1.55rem,3vw,2.3rem);margin:12px 0 0">Catch. Collect. Upgrade.</h3><p style="color:var(--muted);margin:9px 0 0">New gameplay videos and channel updates are shared on YouTube.</p></div></div>
+          <div class="action-row"><a class="action-button" href="https://youtube.com/@masterred.mlbb" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a><button class="action-button secondary" data-go="social">More Social Links</button></div>
+          <div class="page-footer">Gameplay videos are uploaded through Jemuel Miesa's YouTube channel.</div>
+        </div>
+      </section>
+
+      <!-- MOBILE LEGENDS -->
+      <section class="page" id="page-mobilelegends" aria-labelledby="mlTitle">
+        <div class="page-inner">
+          <span class="eyebrow">Gameplay videos</span>
+          <div class="heading-row"><div class="heading-icon">⚔</div><h2 class="page-heading" id="mlTitle">Mobile Legends: <span class="accent">Gameplay</span></h2></div>
+          <p class="lead">Explore Jemuel Miesa's Mobile Legends: Bang Bang gameplay videos, featuring matches, heroes, and in-game moments.</p>
+          <div class="gameplay-banner"><div><span class="eyebrow">From Jemuel's YouTube channel</span><h3 class="section-title" style="font-size:clamp(1.55rem,3vw,2.3rem);margin:12px 0 0">Enter the battlefield.</h3><p style="color:var(--muted);margin:9px 0 0">Watch gameplay uploads and follow future video releases.</p></div></div>
+          <div class="action-row"><a class="action-button" href="https://youtube.com/@masterred.mlbb" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a><button class="action-button secondary" data-go="social">More Social Links</button></div>
+          <div class="page-footer">Gameplay videos are uploaded through Jemuel Miesa's YouTube channel.</div>
+        </div>
+      </section>
+
+      <!-- ZOMBIE TSUNAMI -->
+      <section class="page" id="page-zombiets" aria-labelledby="ztTitle">
+        <div class="page-inner">
+          <span class="eyebrow">Gameplay videos</span>
+          <div class="heading-row"><div class="heading-icon">☄</div><h2 class="page-heading" id="ztTitle">Zombie Tsunami <span class="accent">Gameplay</span></h2></div>
+          <p class="lead">Check out Jemuel Miesa's Zombie Tsunami gameplay uploads, with videos from the fast-paced zombie-running game.</p>
+          <div class="gameplay-banner"><div><span class="eyebrow">From Jemuel's YouTube channel</span><h3 class="section-title" style="font-size:clamp(1.55rem,3vw,2.3rem);margin:12px 0 0">Build the zombie horde.</h3><p style="color:var(--muted);margin:9px 0 0">Visit the channel to explore available gameplay videos.</p></div></div>
+          <div class="action-row"><a class="action-button" href="https://youtube.com/@masterred.mlbb" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a><button class="action-button secondary" data-go="social">More Social Links</button></div>
+          <div class="page-footer">Gameplay videos are uploaded through Jemuel Miesa's YouTube channel.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <audio id="backgroundMusic" src="bgm.mp3" loop preload="none"></audio>
+  <script>
+    (() => {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobileOverlay');
+      const menuToggle = document.getElementById('menuToggle');
+      const gameplayToggle = document.getElementById('gameplayToggle');
+      const gameplaySubmenu = document.getElementById('gameplaySubmenu');
+      const pages = [...document.querySelectorAll('.page')];
+      const navButtons = [...document.querySelectorAll('[data-page]')];
+      const music = document.getElementById('backgroundMusic');
+      const musicToggle = document.getElementById('musicToggle');
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      function closeMobileNav() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        menuToggle.setAttribute('aria-label', 'Open navigation');
+      }
+      function openMobileNav() {
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+        menuToggle.setAttribute('aria-expanded', 'true');
+        menuToggle.setAttribute('aria-label', 'Close navigation');
+      }
+      menuToggle.addEventListener('click', () => sidebar.classList.contains('open') ? closeMobileNav() : openMobileNav());
+      overlay.addEventListener('click', closeMobileNav);
+
+      function showPage(pageName) {
+        const target = document.getElementById(`page-${pageName}`);
+        if (!target) return;
+        pages.forEach(page => page.classList.toggle('active', page === target));
+        navButtons.forEach(button => button.classList.toggle('active', button.dataset.page === pageName));
+        const isGameplay = ['zombiecatchers', 'mobilelegends', 'zombiets'].includes(pageName);
+        gameplayToggle.classList.toggle('active', isGameplay);
+        gameplaySubmenu.classList.toggle('open', isGameplay || gameplaySubmenu.dataset.userOpen === 'true');
+        gameplayToggle.setAttribute('aria-expanded', String(gameplaySubmenu.classList.contains('open')));
+        target.scrollTop = 0;
+        closeMobileNav();
+      }
+      navButtons.forEach(button => button.addEventListener('click', () => showPage(button.dataset.page)));
+      document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => showPage(button.dataset.go)));
+
+      gameplayToggle.addEventListener('click', () => {
+        const open = !gameplaySubmenu.classList.contains('open');
+        gameplaySubmenu.classList.toggle('open', open);
+        gameplaySubmenu.dataset.userOpen = String(open);
+        gameplayToggle.setAttribute('aria-expanded', String(open));
+      });
+
+      musicToggle.addEventListener('click', async () => {
+        if (music.paused) {
+          try {
+            await music.play();
+            musicToggle.textContent = '♫';
+            musicToggle.setAttribute('aria-label', 'Pause background music');
+            musicToggle.title = 'Pause background music';
+          } catch (error) {
+            musicToggle.textContent = '×';
+            musicToggle.title = 'Could not play bgm.mp3';
+            console.warn('Background music could not be played. Check that bgm.mp3 is beside index.html.', error);
+          }
+        } else {
+          music.pause();
+          musicToggle.textContent = '♫';
+          musicToggle.setAttribute('aria-label', 'Play background music');
+          musicToggle.title = 'Play background music';
+        }
+      });
+      music.addEventListener('error', () => {
+        musicToggle.title = 'Place bgm.mp3 beside index.html to enable music';
+      });
+
+      document.getElementById('copyEmail').addEventListener('click', async () => {
+        const status = document.getElementById('copyStatus');
+        try {
+          await navigator.clipboard.writeText('advancedmlbbserver@gmail.com');
+          status.textContent = 'Email address copied.';
+        } catch {
+          status.textContent = 'Copy is unavailable here. Please select the email address above.';
+        }
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeMobileNav();
+      });
+    })();
+  </script>
+</body>
+</html>
